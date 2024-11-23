@@ -1,88 +1,65 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage
-from langgraph.graph import StateGraph, START, END, MessagesState
-from langgraph.prebuilt import ToolNode
-
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.0)
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict
 
 
-@tool(parse_docstring=True)
-def get_weather(location: str) -> str:
-    """This tool returns the weather for a given location.
+class State(TypedDict):
+    graph_input: float
+    node_1: float
+    node_2: float
+    node_3: float
+    node_4: float
+    node_5: float
+    graph_output: float
 
-    Args:
-        location: The location to get the weather for.
 
-    Returns:
-        str: The weather for the location.
-    """
-    return f"The weather in {location} is sunny and temperature is 25 degrees."
+def take_input(state: State):
+    number = int(input("Enter a number: "))
+    return {"graph_input": number}
 
-@tool(parse_docstring=True)
-def calculate(equation: str) -> float:
-    """This tool returns the result of a given equation.
+def multiply_2(state: State):
+    return {"node_1": state["graph_input"] * 2}
 
-    Args:
-        equation: The equation to calculate written for python eval.
+def add_5(state: State):
+    return {"node_2": state["node_1"] + 5}
 
-    Returns:
-        float: The result of the equation.
-    """
-    return eval(equation)
+def subtract_5(state: State):
+    return {"node_3": state["node_2"] - 5}
 
-tools = [get_weather, calculate]
-tool_node = ToolNode(tools=tools)
+def add_10(state: State):
+    return {"node_4": state["node_2"] + 10}
 
-llm_with_tools = llm.bind_tools(tools=tools)
+def divide_2(state: State):
+    return {"node_5": (state["node_3"] + state["node_4"]) / 2}
 
-def agent(state: MessagesState):
-    messages = state['messages']
-    response = llm_with_tools.invoke(input=messages)
-    return {'messages': [response]}
+def give_output(state: State):
+    return {"graph_output": state["node_5"]}
 
-def direct_agent(state: MessagesState):
-    if state["messages"][-1].tool_calls:
-        return "tools"
-    else:
-        return END
+graph_builder = StateGraph(State)
 
-graph_builder = StateGraph(MessagesState)
+graph_builder.add_node("input", take_input)
+graph_builder.add_node("multiply_2", multiply_2)
+graph_builder.add_node("add_5", add_5)
+graph_builder.add_node("subtract_5", subtract_5)
+graph_builder.add_node("add_10", add_10)
+graph_builder.add_node("divide_2", divide_2)
+graph_builder.add_node("output", give_output)
 
-# add the nodes
-graph_builder.add_node("agent", agent)
-graph_builder.add_node("tools", tool_node)
-
-graph_builder.add_edge(START, "agent")
-graph_builder.add_edge("tools", "agent")
-graph_builder.add_conditional_edges(source="agent", path=direct_agent, path_map=["tools", END])
+graph_builder.add_edge(START, "input")
+graph_builder.add_edge("input", "multiply_2")
+graph_builder.add_edge("multiply_2", "add_5")
+graph_builder.add_edge("add_5", "subtract_5")
+graph_builder.add_edge("add_5", "add_10")
+graph_builder.add_edge("subtract_5", "divide_2")
+graph_builder.add_edge("add_10", "divide_2")
+graph_builder.add_edge("divide_2", "output")
+graph_builder.add_edge("output", END)
 
 graph = graph_builder.compile()
 
-# img = graph.get_graph().draw_mermaid_png()
-
-# save the graph to a file
-# with open("graph.png", "wb") as f:
-#     f.write(img)
 
 if __name__ == "__main__":
-    while True:
-        user_input = input("Enter a message: ").strip()
-        if user_input.lower() == "q":
-            break
-        graph_stream =graph.stream(
-            input={
-                "messages": [
-                    HumanMessage(content=user_input)
-                ]
-            },
-            stream_mode="values"
-        )
-        
-        for chunk in graph_stream:
-            for mess in chunk["messages"]:
-                mess.pretty_print()
-            print(">>>>>>>>>>>>>>>>>>>")
-            # print(chunk)
-        print("\n\n==========================================\n\n")
-        
+    # img = graph.get_graph().draw_mermaid_png()
+    # with open("graph.png", "wb") as f:
+    #     f.write(img)
+    output = graph.invoke({"graph_input": 10})
+    print(output)
