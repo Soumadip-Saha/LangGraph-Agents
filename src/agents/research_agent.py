@@ -1,11 +1,28 @@
+import datetime
 from typing import Literal
-from langgraph.graph import MessagesState, StateGraph, START
-from langgraph.types import Command
-from langchain_core.messages import SystemMessage, AIMessage
-from src.utils import call_llm
+from langgraph.graph import MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.runnables import RunnableSerializable, RunnableLambda, RunnableConfig
+from langchain_core.prompts import PromptTemplate
+from langchain_core.messages import AIMessage, SystemMessage
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_community.tools import TavilySearchResults
 
-def researcher(state: MessagesState) -> Command[Literal["__end__"]]:
-    system_prompt = (
+from core import get_model
+
+tools = [
+    TavilySearchResults(
+        max_results=5,
+        search_depth="advanced",
+        include_answer=True,
+        include_raw_content=True,
+        include_images=True
+    )
+]
+
+system_template = PromptTemplate.from_template(
+    (
         "You are a world class researcher, who can do detailed research on any topic "
         "and produce facts based results; you do not make things up, you will try as "
         "hard as possible to gather facts & data to back up the research. Please make "
@@ -20,20 +37,44 @@ def researcher(state: MessagesState) -> Command[Literal["__end__"]]:
         "reference data & links to back up your research; You should include all reference "
         "data & links to back up your research\n6. In the final output, You should include "
         "all reference data & links to back up your research; You should include all reference "
-        "data & links to back up your research"
+        "data & links to back up your research\n\n"
+        "For your information, today's date is {date}.\n\n"
     )
-    messages = [SystemMessage(content=system_prompt)] + state["messages"]
-    response = call_llm(messages, ["__end__"])
-    ai_msg = AIMessage(content=response["response"], name="research_agent")
-    return Command(goto=response["goto"], update={"messages": [ai_msg]})
+)
+
+def wrap_model(model: BaseChatModel) -> RunnableSerializable[MessagesState, AIMessage]:
+    if len(tools)>0:
+        model = model.bind_tools(tools)
+    instructions = system_template.invoke({"date": datetime.datetime.now().strftime("%B %d, %Y")}).to_string()
+    preprocessor = RunnableLambda(
+        lambda state: [SystemMessage(content=instructions)] + state["messages"],
+        name="StateModifier"
+    )
+    return preprocessor | model
+
+async def acall_model(state: MessagesState, config: RunnableConfig) -> MessagesState:
+    m = get_model(config["configurable"].get("model", "gpt-4o-mini"))
+    model_runnable = wrap_model(m)
+    response = await model_runnable.ainvoke(state, config)
     
-builder = StateGraph(MessagesState)
+    return {"messages": [response]}
 
-# Add agent to the graph
-builder.add_node("researcher", researcher)
+# Define the graph
+agent = StateGraph(MessagesState)
+agent.add_node("model", acall_model)
+agent.add_node("tools", ToolNode(tools))
+agent.set_entry_point("model")
 
-# Add edges
-builder.add_edge(START, "researcher")
+agent.add_edge("tools", "model")
 
-# Compile the graph
-research_agent = builder.compile()
+def call_tool(state: MessagesState) -> Literal["tools", "done"]:
+    last_message = state["messages"][-1]
+    if not isinstance(last_message, AIMessage):
+        raise TypeError(f"Expected AIMessage, got {type(last_message)}")
+    if last_message.tool_calls:
+        return "tools"
+    return "done"
+
+agent.add_conditional_edges("model", call_tool, {"tools": "tools", "done": "__end__"})
+
+research_agent = agent.compile(checkpointer=MemorySaver())

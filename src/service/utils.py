@@ -1,6 +1,6 @@
 from fastapi import Request
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
-from src.schemas import ChatMessage
+from schema import ChatMessage
 
 def get_client_ip(request: Request) -> str:
     """Get the client IP address from the request headers."""

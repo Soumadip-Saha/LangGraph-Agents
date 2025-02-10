@@ -9,7 +9,7 @@ from langchain_core.messages import HumanMessage
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from src.schemas import RequestFormatter
+from src.schema import RequestFormatter
 from src.utils import (
     get_client_ip, 
     langchain_to_chat_message, 
