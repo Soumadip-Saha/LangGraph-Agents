@@ -71,9 +71,9 @@ async def main() -> None:
         @st.dialog("Architecture")
         def architecture_dialog() -> None:
             st.image(
-                "https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png?raw=true"
+                os.path.join(os.getcwd(),"graph.png"),
             )
-            "[View full size on Github](https://github.com/JoshuaC215/agent-service-toolkit/blob/main/media/agent_architecture.png?raw=true)"
+            "[View full size on Github]()"
             st.caption(
                 "App hosted by Soumadip locally."
             )
