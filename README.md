@@ -55,6 +55,13 @@ The service components will be available at:
 - Backend API: http://localhost:8000
 - Streamlit UI: http://localhost:8501
 
+## Demo Video
+
+<video width="100%" controls>
+  <source src="media/Demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 ## Architecture
 
 The project consists of several key components:

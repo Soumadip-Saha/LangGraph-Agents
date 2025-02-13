@@ -71,7 +71,7 @@ async def main() -> None:
         @st.dialog("Architecture")
         def architecture_dialog() -> None:
             st.image(
-                os.path.join(os.getcwd(),"graph.png"),
+                os.path.join(os.getcwd(),"media/graph.png"),
             )
             "[View full size on Github]()"
             st.caption(
