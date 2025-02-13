@@ -57,8 +57,7 @@ The service components will be available at:
 
 ## Demo
 
-<video src="media/Demo.gif" controls="controls" style="max-width: 100%;">
-</video>
+![Demo](media/Demo.gif)
 
 ## Architecture
 
