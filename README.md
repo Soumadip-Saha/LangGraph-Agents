@@ -57,9 +57,7 @@ The service components will be available at:
 
 ## Demo Video
 
-<video width="100%" controls>
-  <source src="media/Demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+<video src="media/Demo.mp4" controls="controls" style="max-width: 100%;">
 </video>
 
 ## Architecture
