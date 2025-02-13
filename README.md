@@ -55,9 +55,9 @@ The service components will be available at:
 - Backend API: http://localhost:8000
 - Streamlit UI: http://localhost:8501
 
-## Demo Video
+## Demo
 
-<video src="media/Demo.mp4" controls="controls" style="max-width: 100%;">
+<video src="media/Demo.gif" controls="controls" style="max-width: 100%;">
 </video>
 
 ## Architecture
