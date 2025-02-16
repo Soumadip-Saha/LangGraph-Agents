@@ -31,7 +31,7 @@ A powerful AI research assistant built with LangGraph, FastAPI, and Streamlit. T
 ### Installation
 
 ```bash
-git clone https://github.com/yourusername/langgraph-research-assistant.git
+git clone https://github.com/Soumadip-Saha/LangGraph-Agents.git
 cd langgraph-research-assistant
 pip install -r requirements.txt
 ```
