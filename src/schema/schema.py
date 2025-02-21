@@ -1,6 +1,6 @@
 from typing import Any
 from pydantic import BaseModel, Field, SerializeAsAny
-from schema.models import AllModelEnum, OpenAIModelName
+from schema.models import AllModelEnum, OpenAIModelName, GoogleModelName
 from typing import Any, Literal, NotRequired
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
@@ -106,7 +106,7 @@ class UserInput(BaseModel):
     model: SerializeAsAny[AllModelEnum] | None = Field(
         title="Model",
         description="LLM model to use for the agent.",
-        default=OpenAIModelName.GPT_4O_MINI,
+        default=GoogleModelName.GEMINI_20_FLASH,
         examples=[OpenAIModelName.GPT_4O_MINI]
     )
     thread_id: str | None = Field(
