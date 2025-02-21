@@ -34,9 +34,10 @@ class Settings(BaseSettings):
     AVAILABLE_MODELS: set[AllModelEnum] = set()
     
     def model_post_init(self, __context: Any) -> None:
+        # Default Model will be chosen based on the order of the providers. 
         api_keys = {
-            Provider.OPENAI: self.OPENAI_API_KEY,
-            Provider.GOOGLE: self.GOOGLE_API_KEY
+            Provider.GOOGLE: self.GOOGLE_API_KEY,
+            Provider.OPENAI: self.OPENAI_API_KEY
         }
         active_keys = [k for k, v in api_keys.items() if v]
         if not active_keys:
